@@ -2,8 +2,19 @@
 
 """
 PyMan
-Bring up help, functions, doumentation and definition files conveniently in the command line.
+Bring up help, functions, or definition file conveniently in the command line
+
+--- TODO ---
+
+* pyman threading.Thread is not bringing up the module function help
+* Give suggestions for module functions too: e.g. thread.Thread will match search term 'Thr'
+* Find out how to find file path of module that is inbuilt (May only work when installed in venv)
+* Interative menu -i to loop over search, open man page then come back to program
+
+* Must be a way to do autocomplete on command line input: expand into full application
+
 """
+
 
 import sys
 import argparse
@@ -11,6 +22,10 @@ import pkgutil
 import importlib
 import subprocess
 import webbrowser
+
+# This is a new line
+def foo():
+    print("Look")
 
 def import_module(module_name: str):  # Return type for module?
     try:
@@ -21,8 +36,6 @@ def import_module(module_name: str):  # Return type for module?
 
 def get_module_functions(module):  # -> list[Callable]:
     attributes = dir(module)
-    # TODO: Need function objects below instead of string parameter
-    # in order to run dir(function), otherwise just does dir(str) every time
     functions = [attr for attr in attributes if not attr.startswith("_")]
     return functions
 
@@ -77,11 +90,6 @@ def search_all(search_term: str) -> str | None:
         return "partial"
 
 def open_docs_page(module_name: str) -> None:
-    """
-    TODO: 
-    Check if 404 not found, then if this response, don't open in browser
-    Also run suggestions here like with man function
-    """
     url = f"https://docs.python.org/3/library/{module_name}.html"
     # If invalid URL, print no page found
     # Idea: Jump to a function definition on the page
@@ -89,6 +97,7 @@ def open_docs_page(module_name: str) -> None:
         webbrowser.open(url)
     except Exception as e:
         print(e)
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -109,12 +118,6 @@ def main():
     )
     
     parser.add_argument(
-        "-m", "--man", 
-        help="Open module's man page in the console.",
-        action="store_true"
-    )
-    
-    parser.add_argument(
         "-d", "--dir", 
         help="List available functions and classes for this module",
         action="store_true"
@@ -128,28 +131,14 @@ def main():
     
     parser.add_argument(
         "-doc", "--documentation", 
-        help="Open official docs page in browser",
+        help="TODO: Open official docs page in browser",
         action="store_true"
     )
     
     args = parser.parse_args()
-    if args.documentation is True:
-        open_docs_page(args.module)
-        sys.exit()
-    if args.dir is True:
-        # Not working! Needs a function object, just processes string right now
-        print(f"--- Inbuilt Functions for <{args.module}> ---")
-        for module in get_module_functions(args.module):
-            print(f"* {module}")
-        sys.exit()
 
-    if args.definition is True:
-        open_definition(args.module)
-    
-    # No other arguments, default to --man
     results = search_all(args.module)
     if not results:
-        print("No matches found.")
         sys.exit() 
     elif results == "module":
         mod = import_module(args.module)
@@ -164,9 +153,64 @@ def main():
         # str is not caught here it should be treated as a module
         print_man(args.module)
     elif results == "partial":
-        # Prints any close matches in above function
+        # str is not caught here it should be treated as a module
         pass
+
+def run_menu_loop(module_name: str, search_filter: str | None = None):
+    """
+    Display module functions enumerated in alphabetical order.
+    Optionally display only those starting with or matching the search filter string.
+    Conversion between function names and objects maybe required.
+    Select function by number or q to exit.
+
+    TODO: Run the man page function, then once user quits the shell man page, back to
+    the menu loop to choose another or exit.
+    """
+    # Import module
+    # Derive function list from modules 
+    mod = import_module(module_name)
+    assert module_name in locals(), f"Error: '{module_name}' not in locals() after importing."
+    # This returns function objects, we want them named
+    # Check is alphabetised
+    
+    func_objects = get_module_functions(mod)
+    print(f"{func_objects[:10]=}")
+    
+    # TODO: List of function dicts [{index, func_name, func_obj}]
+    # Then access the function object or name based on index, run man function
+    # assert choice in list of dicts index keys
+    
+    test_indexes = [1, 2, 3]
+    test_func_names = [ "importlib", "argparse", "sys"]
+    test_func_objs = [importlib, argparse, sys]
+    # Iterate above with keys and values somehow
+    test_func_dicts = [{}, {}, {}]
+
+    while True:
+        print(f"--- Functions and Classes for {module_name} ---")
+        # Loop over list of dicts func_name
+        for i, func in enumerate(dir(mod)):
+            print(f"{i}: {func}")
+        choice = input("Enter number or q to exit -> ")
+        if choice == ("q" or "Q"):
+            sys.exit(0)
+        else:
+            # Loop over list of dicts func_obj I think
+            for i, func in enumerate(dir(mod)):
+                if i == "t":
+                    # Access func obj based on the displayed numbers
+                    test_func_obj = sys.modules
+                    print_man(test_func_obj)
+                    # man_process = subprocess.Popen(['man', function_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                    continue
+                elif choice == i:
+                    print("TODO: Match choice to index of function")
+                    continue
+                print(f"{choice} is invalid.")
+                    # Now to wait until man processed funished in shell, return to loop
+                    # Perhaps something in subprocess module. Or maybe does automatically?
 
 if __name__ == "__main__":
     main()
-
+    # m = partial_search("th")
+    # print(m)
