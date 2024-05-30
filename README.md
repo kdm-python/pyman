@@ -6,9 +6,9 @@ application soon with many more features and ability to install into a virtual e
 Place in Linux script directory, make executable and run as below.
 
 Functionality implemented: <br />
-$ pyman <module> => man page in console <br />
-$ pyman <module> -docs => Open official Python documentation page <br />
-$ pyman <module> -dir => Generate list of all available members of module/function <br />
+$ pyman module_name => man page in console <br />
+$ pyman module_name -docs => Open official Python documentation page <br />
+$ pyman module_name -dir => Generate list of all available members of module/function <br />
 
 Working on: <br />
 $ pyman pathlib Path => Go to specific function definition <br />
